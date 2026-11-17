@@ -24,7 +24,9 @@ class DonorRegistrationTest extends TestCase
 
         $this->get(route('donors.create'))
             ->assertOk()
-            ->assertSee('Un premier pas')
+            ->assertSee('Quelques questions sur votre santé')
+            ->assertSee('data-ambulance')
+            ->assertSee('Repères indicatifs à confirmer auprès du CNTS-CI')
             ->assertSee('Passer l’animation');
     }
 
@@ -149,7 +151,30 @@ class DonorRegistrationTest extends TestCase
         $this->post(route('donors.store'), $this->validPayload())
             ->assertRedirect(route('donors.thanks'));
 
-        $this->assertSame('medical_review', Donor::query()->sole()->eligibility_result['status']);
+        $this->assertSame('not_eligible', Donor::query()->sole()->eligibility_result['status']);
+    }
+
+    public function test_age_above_the_configured_maximum_is_stored_as_not_eligible(): void
+    {
+        Queue::fake();
+        $this->travelTo('2026-11-17 10:00:00');
+        $payload = $this->validPayload();
+        $payload['birth_date'] = '1955-11-16';
+
+        $this->post(route('donors.store'), $payload)->assertRedirect(route('donors.thanks'));
+
+        $this->assertSame('not_eligible', Donor::query()->sole()->eligibility_result['status']);
+    }
+
+    public function test_weight_below_the_configured_minimum_is_stored_as_not_eligible(): void
+    {
+        Queue::fake();
+        $payload = $this->validPayload();
+        $payload['weight_kg'] = '49';
+
+        $this->post(route('donors.store'), $payload)->assertRedirect(route('donors.thanks'));
+
+        $this->assertSame('not_eligible', Donor::query()->sole()->eligibility_result['status']);
     }
 
     public function test_invalid_phone_and_missing_consent_do_not_store_or_flash_sensitive_input(): void

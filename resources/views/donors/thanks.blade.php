@@ -20,6 +20,11 @@
 
     <main class="registration-page confirmation-page">
         <section class="registration-card confirmation-card" aria-labelledby="confirmation-title" data-confirmation>
+            <ol class="registration-steps" aria-label="Étapes de l’inscription">
+                <li class="is-complete"><span>01</span>Médical</li>
+                <li class="is-complete"><span>02</span>Personnel</li>
+                <li class="is-current" aria-current="step"><span>03</span>Confirmation</li>
+            </ol>
             <div class="progress-heading">
                 <span>Étape 3 sur 3</span>
                 <span>Inscription terminée</span>
@@ -42,7 +47,7 @@
                     </defs>
                     <path d="M90 148S22 107 22 60C22 23 67 15 90 49c23-34 68-26 68 11 0 47-68 88-68 88Z" fill="#241216" stroke="#d65a60" stroke-width="3"/>
                     <g clip-path="url(#heart-clip)">
-                        <rect data-heart-fill x="12" y="146" width="160" height="0" fill="url(#heart-gradient)"/>
+                        <rect data-heart-fill x="12" y="8" width="160" height="140" fill="url(#heart-gradient)"/>
                         <path d="M15 98q20-10 40 0t40 0 40 0 40 0" fill="none" stroke="#ff9a94" stroke-opacity=".65" stroke-width="3"/>
                     </g>
                     <path data-heart-drop d="M90 10s14 17 14 29a14 14 0 0 1-28 0C76 27 90 10 90 10Z" fill="#f06467"/>
@@ -50,12 +55,11 @@
             </div>
             <p class="step-kicker">03 — Un geste qui compte</p>
             <h1 id="confirmation-title" tabindex="-1">Merci !</h1>
-            <p class="confirmation-message">Vous serez prévenu de la prochaine collecte.</p>
+            <p class="confirmation-message">Vous serez prévenu(e) de la prochaine collecte.</p>
             <p class="step-description">Votre inscription est bien enregistrée. L’équipe médicale évaluera toujours votre aptitude au moment du don.</p>
             <a class="button button-primary" href="{{ route('home') }}">Retour à l’accueil <span aria-hidden="true">→</span></a>
         </section>
     </main>
-    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
     <script src="{{ asset('js/donor-registration.js') }}" defer></script>
 </body>
 </html>

@@ -32,16 +32,16 @@ class DonorEligibility
 
         if ($birthDate->age > $rules['maximum_age']) {
             return [
-                'status' => 'medical_review',
-                'message' => 'Un professionnel de santé pourra vous indiquer si le don est adapté à votre situation.',
+                'status' => 'not_eligible',
+                'message' => 'Selon les repères indicatifs, vous ne semblez pas éligible aujourd’hui. Un médecin pourra confirmer votre situation.',
                 'eligible_from' => null,
             ];
         }
 
         if ($weightKg < $rules['minimum_weight_kg']) {
             return [
-                'status' => 'medical_review',
-                'message' => 'Un professionnel de santé pourra vérifier avec vous les conditions adaptées à votre situation.',
+                'status' => 'not_eligible',
+                'message' => 'Selon les repères indicatifs, vous ne semblez pas éligible aujourd’hui. Un médecin pourra confirmer votre situation.',
                 'eligible_from' => null,
             ];
         }

@@ -7,6 +7,29 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## DS.CI setup
+
+Requirements: PHP 8.3+, Composer, and SQLite. From the project root, run these commands in PowerShell:
+
+```powershell
+composer install
+Copy-Item .env.example .env
+php artisan key:generate
+php artisan migrate
+php artisan serve
+```
+
+Open `http://localhost:8000` and choose **Devenir donneur**. The registration animation uses local CSS and SVG; no frontend build or animation library is required.
+
+Run background jobs and scheduled collection notifications in separate terminals:
+
+```powershell
+php artisan queue:work
+php artisan schedule:work
+```
+
+Configure SMTP in `.env` to send real e-mail. The SMS/WhatsApp gateway must be connected before those channels can deliver messages. The provisional pre-screening thresholds are in `config/donor.php` (18–60 years, 50 kg, 90 days); confirm them with the CNTS-CI before production. A doctor always makes the final eligibility decision.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:

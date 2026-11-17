@@ -1,5 +1,5 @@
 :root {
-    color-scheme: dark;
+    color-scheme: light dark;
     --ink: #0d0d0f;
     --paper: #f6f1ea;
     --muted: #bbb0b2;
@@ -12,6 +12,8 @@
 * { box-sizing: border-box; }
 html { min-height: 100%; scroll-behavior: smooth; }
 body {
+    position: relative;
+    isolation: isolate;
     min-height: 100vh;
     margin: 0;
     color: var(--paper);
@@ -41,6 +43,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 .registration-brand { display: inline-flex; align-items: center; gap: .65rem; font-weight: 850; letter-spacing: .1em; }
 .registration-brand img { width: 2.45rem; height: 2.45rem; object-fit: cover; border-radius: 50%; background: #fff; }
+.brand-drop { width: 1.05rem; height: 1.35rem; margin-left: -.3rem; color: #e65357; }
+.registration-brand-copy { display: flex; flex-direction: column; gap: .16rem; }
+.registration-brand-copy strong { font-size: .98rem; }
+.registration-brand-copy small { color: #c8babc; font-size: .62rem; font-weight: 550; letter-spacing: .015em; }
 .header-back { color: #d3c9ca; font-size: .82rem; }
 .header-back:hover { color: white; }
 .registration-page { width: min(760px, calc(100% - 2rem)); margin: 0 auto; padding: 2rem 0 3rem; }
@@ -63,10 +69,19 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .registration-error-summary ul { margin: .5rem 0 0; padding-left: 1.15rem; }
 .registration-card {
     position: relative; z-index: 60; padding: clamp(1.25rem, 4vw, 2.5rem);
-    border: 1px solid rgba(255,255,255,.13); border-radius: 1.35rem;
-    background: linear-gradient(145deg, rgba(31,26,28,.98), rgba(20,18,20,.98));
-    box-shadow: 0 28px 90px rgba(0,0,0,.4), inset 0 1px rgba(255,255,255,.035);
+    overflow: hidden; border: 1px solid rgba(255,255,255,.16); border-radius: 1.35rem;
+    background: linear-gradient(145deg, rgba(31,26,28,.84), rgba(20,18,20,.78));
+    box-shadow: 0 28px 90px rgba(0,0,0,.4), 0 0 34px rgba(183,28,28,.1), inset 0 1px rgba(255,255,255,.06);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
 }
+.registration-card::before { position: absolute; top: 0; right: 0; left: 0; height: 3px; background: linear-gradient(90deg, transparent, #b71c1c 18%, #ed5b5e 50%, #b71c1c 82%, transparent); content: ""; }
+.registration-steps { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: .55rem; margin: 0 0 1.15rem; padding: 0; list-style: none; }
+.registration-steps li { display: flex; align-items: center; gap: .45rem; min-width: 0; padding: .65rem .5rem; border-bottom: 2px solid rgba(255,255,255,.13); color: #a99fa1; font-size: .76rem; font-weight: 650; }
+.registration-steps li span { display: inline-grid; width: 1.55rem; height: 1.55rem; flex: 0 0 auto; place-items: center; border: 1px solid rgba(255,255,255,.2); border-radius: 50%; color: #c8babc; font-size: .62rem; }
+.registration-steps li.is-current { border-color: #e65357; color: #fff; }
+.registration-steps li.is-current span, .registration-steps li.is-complete span { border-color: #b71c1c; background: #b71c1c; color: #fff; }
+.registration-steps li.is-complete { border-color: rgba(183,28,28,.6); color: #e5c4c5; }
 .progress-heading { display: flex; justify-content: space-between; gap: 1rem; color: #d7cdcf; font-size: .72rem; }
 .progress-heading span:first-child { color: #fff; font-weight: 750; }
 .progress-track { height: 5px; margin: .85rem 0 2rem; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.1); }
@@ -115,12 +130,17 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .yes-no-question .field-error { grid-column: 1 / -1; margin: 0; }
 .eligibility-result {
     display: flex; gap: .8rem; align-items: flex-start; margin-top: 1.5rem; padding: 1rem;
-    border: 1px solid rgba(221,99,104,.25); border-radius: .9rem; background: rgba(111,19,29,.17);
+    border: 1px solid rgba(221,99,104,.25); border-left: 4px solid #e65357; border-radius: .9rem; background: rgba(111,19,29,.17);
 }
-.result-icon { color: #f17e80; font-size: 1.15rem; line-height: 1.2; }
+.result-icon { display: inline-grid; width: 1.5rem; height: 1.5rem; flex: 0 0 auto; place-items: center; border-radius: 50%; color: #fff; background: #8e171d; font-size: .9rem; font-weight: 850; line-height: 1.2; }
 .eligibility-result strong { display: block; font-size: .83rem; }
 .eligibility-result p { margin: .25rem 0 0; color: #c7babb; font-size: .75rem; line-height: 1.55; }
-.eligibility-result[data-state=review] { border-color: rgba(238,188,112,.35); background: rgba(122,82,24,.13); }
+.eligibility-result[data-state=eligible] { border-left-color: #3eaa76; }
+.eligibility-result[data-state=eligible] .result-icon { background: #24744f; }
+.eligibility-result[data-state=review], .eligibility-result[data-state=deferred] { border-left-color: #d9a64d; border-top-color: rgba(238,188,112,.35); border-right-color: rgba(238,188,112,.35); border-bottom-color: rgba(238,188,112,.35); background: rgba(122,82,24,.13); }
+.eligibility-result[data-state=review] .result-icon, .eligibility-result[data-state=deferred] .result-icon { background: #8e6527; }
+.eligibility-result[data-state=not-eligible] { border-left-color: #e65357; }
+.eligibility-result[data-state=not-eligible] .result-icon { background: #8e171d; }
 .medical-disclaimer, .privacy-note { color: #a99fa1; font-size: .69rem; line-height: 1.6; }
 .medical-disclaimer { margin: .8rem 0 0; }
 .step-actions { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1.7rem; }
@@ -133,6 +153,20 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .button:hover { transform: translateY(-2px); }
 .button-primary { background: var(--red); color: white; box-shadow: 0 8px 26px rgba(183,28,28,.22); }
 .button-primary:hover { background: #ca292c; }
+.button-progress {
+    --completion: 0%;
+    min-width: 12.5rem;
+    border-color: #c43a40;
+    background: transparent;
+    color: var(--paper);
+    cursor: not-allowed;
+}
+.button-progress[data-progressing=true] { background: linear-gradient(90deg, #b71c1c var(--completion), #5a0a12 var(--completion)); color: #fff; }
+.button-progress:not(:disabled) { border-color: #b71c1c; background: #b71c1c; color: #fff; cursor: pointer; animation: button-pulse 2.2s ease-in-out infinite; }
+.button-progress:disabled:hover { transform: none; }
+.button-progress-content { display: inline-flex; align-items: center; justify-content: center; gap: .55rem; }
+.button-progress-content small { font-size: .7rem; font-weight: 700; opacity: .9; }
+.button-progress:not(:disabled) .button-progress-content small { color: #fff; }
 .button-secondary { border-color: rgba(255,255,255,.2); background: transparent; color: #e1d8d9; }
 .button-secondary:hover { border-color: rgba(255,255,255,.45); background: rgba(255,255,255,.05); }
 .channel-fieldset { margin: 0; padding: 0; border: 0; }
@@ -146,13 +180,55 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .honeypot { position: absolute !important; left: -10000px !important; width: 1px !important; height: 1px !important; overflow: hidden !important; }
 .registration-footnote { margin: 1rem 0 0; text-align: center; color: #9c9294; font-size: .7rem; line-height: 1.6; }
 
-.ambulance-scene { position: fixed; z-index: 50; inset: 0; overflow: hidden; pointer-events: none; background: radial-gradient(ellipse at center, rgba(61,11,18,.94), rgba(13,13,15,.97) 74%); }
-.ambulance { position: absolute; left: 50%; top: 53%; width: min(560px, 95vw); height: auto; transform: translate(-50%,-50%); overflow: visible; }
+.ambulance-stage {
+    --walk-distance: clamp(-220px, -39vw, -120px);
+    position: relative; height: 216px; overflow: hidden;
+    isolation: isolate;
+    background: radial-gradient(ellipse at 50% 100%, rgba(120, 21, 33, .24), transparent 68%);
+}
+.ambulance-stage::before { position: absolute; right: 0; bottom: 1.65rem; left: 0; height: 4.1rem; border-top: 1px solid rgba(255,255,255,.1); border-bottom: 1px solid rgba(255,255,255,.08); background: linear-gradient(180deg, #242226, #151417 58%, #201e21); box-shadow: 0 -7px 26px rgba(183,28,28,.17); content: ""; }
+.ambulance-stage.is-animating { animation: road-close 9s linear both; }
+.ambulance-road {
+    position: relative; width: min(560px, 100%); height: 100%; margin: 0 auto;
+}
+.ambulance-road::before {
+    position: absolute; z-index: 1; right: 0; bottom: 3.55rem; left: 0; height: 3px;
+    background: repeating-linear-gradient(90deg, #edc94d 0 1.5rem, transparent 1.5rem 2.7rem);
+    content: "";
+}
+.ambulance {
+    position: absolute; bottom: 0; left: 50%; width: min(500px, 100%); height: 100%;
+    overflow: visible; translate: -50% 0;
+}
+.ambulance-stage.is-animating .ambulance { animation: van-journey 9s ease-in-out both; }
 .vehicle-body { transform-origin: center; }
 .ambulance .vehicle-body { animation: vehicle-idle .22s linear infinite alternate; }
 .ambulance [data-siren-red], .ambulance [data-siren-blue] { animation: siren-pulse .62s ease-in-out infinite alternate; }
 .ambulance [data-siren-blue] { animation-delay: .31s; }
 .ambulance .wheel { transform-box: fill-box; transform-origin: center; animation: wheel-turn .75s linear infinite; }
+.paramedic { opacity: 0; transform-box: fill-box; transform-origin: center; }
+.ambulance-stage.is-animating .paramedic { animation: paramedic-trip 9s linear both; }
+.paramedic-orange { transform: translate(368px, 111px); }
+.paramedic-blue { transform: translate(397px, 111px); }
+.ambulance-stage.is-animating .paramedic-orange { animation-delay: 0s; }
+.paramedic-arm, .paramedic-leg { transform-box: fill-box; transform-origin: top center; }
+.ambulance-stage.is-animating .paramedic-arm-left, .ambulance-stage.is-animating .paramedic-leg-right {
+    animation: paramedic-swing .4s ease-in-out 2.15s 11 alternate;
+}
+.ambulance-stage.is-animating .paramedic-arm-right, .ambulance-stage.is-animating .paramedic-leg-left {
+    animation: paramedic-swing .4s ease-in-out 2.15s 11 alternate-reverse;
+}
+.form-sheet { opacity: 0; transform-box: fill-box; transform-origin: top left; }
+.ambulance-stage.is-animating .form-sheet { animation: form-sheet-pull 9s linear both; }
+.ambulance [data-rear-door] { transform-box: fill-box; transform-origin: left center; }
+.ambulance-stage.is-animating [data-rear-door] { animation: rear-door-sequence 9s linear both; }
+.registration-page.is-animating .registration-card {
+    pointer-events: none;
+    transform-origin: top center;
+    animation: registration-reveal 9s linear both;
+}
+.ambient-drops { position: fixed; z-index: -1; inset: 0; overflow: hidden; pointer-events: none; }
+.ambient-drops span { position: absolute; top: -1.5rem; left: var(--drop-left); width: .38rem; height: .58rem; border-radius: 65% 35% 58% 42%; background: linear-gradient(145deg, rgba(244,91,94,.6), rgba(122,9,20,.2)); filter: blur(.3px); animation: blood-drop-fall var(--drop-duration) linear var(--drop-delay) infinite; }
 .skip-animation {
     position: fixed; z-index: 80; top: 1.15rem; right: 1.15rem; min-height: 2.8rem;
     padding: .65rem 1rem; border: 1px solid rgba(255,255,255,.35); border-radius: 999px;
@@ -162,7 +238,12 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .confirmation-page { max-width: 620px; padding-top: clamp(2rem, 8vh, 6rem); }
 .confirmation-card { text-align: center; }
 .confirmation-art { width: 170px; height: 160px; margin: 1rem auto .5rem; }
-.confirmation-art svg { width: 100%; height: 100%; overflow: visible; }
+.confirmation-art svg { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 0 18px rgba(183,28,28,.3)); }
+.confirmation-art [data-heart-fill] {
+    transform-box: fill-box; transform-origin: center bottom;
+    animation: heart-fill 2.5s ease-in-out infinite;
+}
+.confirmation-art [data-heart-drop] { animation: heart-drop 2.5s ease-in infinite; }
 .confirmation-card .step-kicker { margin: .3rem 0 .6rem; }
 .confirmation-card h1 { margin: 0; font-size: clamp(3rem, 9vw, 4.8rem); letter-spacing: -.07em; line-height: 1; }
 .confirmation-message { margin: .85rem 0; color: #f0b0ae; font-size: 1.05rem; font-weight: 700; }
@@ -172,10 +253,65 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 @keyframes siren-pulse { from { opacity: .38; filter: drop-shadow(0 0 0 transparent); } to { opacity: 1; filter: drop-shadow(0 0 8px currentColor); } }
 @keyframes wheel-turn { to { rotate: 360deg; } }
 @keyframes vehicle-idle { from { translate: 0 -1px; } to { translate: 0 1px; } }
-@keyframes heart-pulse { 50% { transform: scale(1.04); } }
+@keyframes van-journey {
+    0% { translate: calc(-50% - 120vw) 0; }
+    17% { translate: -50% 0; }
+    85% { translate: -50% 0; }
+    100% { translate: calc(-50% + 120vw) 0; }
+}
+@keyframes paramedic-trip {
+    0%, 22% { opacity: 0; translate: 0 0; }
+    25% { opacity: 1; translate: 0 14px; }
+    32% { opacity: 1; translate: var(--walk-distance) 14px; }
+    68% { opacity: 1; translate: var(--walk-distance) 14px; }
+    75% { opacity: 1; translate: 0 0; }
+    79%, 100% { opacity: 0; translate: 0 0; }
+}
+@keyframes paramedic-swing { to { rotate: 35deg; } }
+@keyframes form-sheet-pull {
+    0%, 38% { opacity: 0; translate: 0 0; }
+    42% { opacity: 1; translate: 0 0; }
+    52% { opacity: 1; translate: 0 72px; }
+    58%, 100% { opacity: 0; translate: 0 72px; }
+}
+@keyframes rear-door-sequence {
+    0%, 37% { rotate: 0; }
+    42%, 80% { rotate: -70deg; }
+    85%, 100% { rotate: 0; }
+}
+@keyframes registration-reveal {
+    0%, 46% { opacity: 0; transform: translateY(0) scale(.8); visibility: hidden; }
+    53% { opacity: .65; transform: translateY(18px) scale(.86); visibility: visible; }
+    66%, 100% { opacity: 1; transform: translateY(0) scale(1); visibility: visible; }
+}
+@keyframes road-close {
+    0%, 88% { height: 216px; }
+    100% { height: 112px; }
+}
+@keyframes heart-fill {
+    0%, 10% { transform: scaleY(0); }
+    55%, 80% { transform: scaleY(1); }
+    100% { transform: scaleY(0); }
+}
+@keyframes heart-drop {
+    0% { opacity: 1; translate: 0 -8px; }
+    35% { opacity: 1; translate: 0 45px; }
+    40%, 100% { opacity: 0; translate: 0 58px; }
+}
+@keyframes blood-drop-fall {
+    0% { opacity: 0; translate: 0 -3vh; rotate: -15deg; }
+    12%, 82% { opacity: .5; }
+    100% { opacity: 0; translate: 1.5rem 108vh; rotate: 35deg; }
+}
+@keyframes button-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(183,28,28,.3), 0 8px 26px rgba(183,28,28,.2); }
+    50% { box-shadow: 0 0 0 5px rgba(183,28,28,0), 0 10px 32px rgba(183,28,28,.3); }
+}
 @media (max-width: 600px) {
     .registration-header { width: calc(100% - 2rem); height: 68px; }
     .registration-brand img { width: 2.1rem; height: 2.1rem; }
+    .registration-brand-copy small { max-width: 10.5rem; font-size: .56rem; }
+    .brand-drop { width: .85rem; height: 1.1rem; }
     .header-back { font-size: .72rem; }
     .registration-page { padding-top: 1.1rem; }
     .registration-intro { margin: .6rem auto 1.2rem; }
@@ -183,6 +319,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
     .registration-intro > p:last-child { font-size: .85rem; }
     .registration-card { border-radius: 1rem; }
     .progress-heading { font-size: .64rem; }
+    .registration-steps { gap: .25rem; }
+    .registration-steps li { justify-content: center; gap: .3rem; padding: .55rem .15rem; font-size: .69rem; }
+    .registration-steps li span { width: 1.35rem; height: 1.35rem; font-size: .58rem; }
     .progress-track { margin-bottom: 1.45rem; }
     .field-grid { grid-template-columns: 1fr; gap: .9rem; }
     .field-full { grid-column: auto; }
@@ -190,14 +329,84 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
     .yes-no-question > legend { max-width: 65%; font-size: .76rem; }
     .radio-options { gap: .28rem; }
     .radio-options span { min-width: 2.85rem; min-height: 2.25rem; padding: .4rem .55rem; font-size: .7rem; }
-    .ambulance { top: 48%; width: 106vw; }
     .skip-animation { top: .7rem; right: .7rem; min-height: 2.5rem; font-size: .7rem; }
     .step-actions .button { font-size: .75rem; padding: .75rem .9rem; }
+    .button-progress { min-width: 11rem; }
     .consent-block { padding: .9rem; }
 }
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
-    .ambulance-scene, .skip-animation { display: none !important; }
-    .confirmation-art [data-heart-fill] { y: 90px; height: 56px; }
+    .ambulance-stage, .skip-animation { display: none !important; }
+    .registration-page.is-animating .registration-card { animation: none !important; opacity: 1 !important; visibility: visible !important; transform: none !important; }
+    .confirmation-art [data-heart-fill] { y: 90px; height: 56px; transform: none !important; }
+    .confirmation-art [data-heart-drop] { display: none; }
+}
+
+@media (prefers-color-scheme: light) {
+    :root {
+        color-scheme: light;
+        --ink: #f7f3ef;
+        --paper: #211b1a;
+        --muted: #625856;
+        --line: rgba(57,37,35,.16);
+    }
+    body {
+        background:
+            radial-gradient(ellipse at 82% 10%, rgba(183,28,28,.12), transparent 40%),
+            radial-gradient(ellipse at 8% 82%, rgba(90,10,18,.08), transparent 38%),
+            var(--ink);
+    }
+    .header-back { color: #594f4d; }
+    .header-back:hover { color: #211b1a; }
+    .eyebrow, .step-kicker { color: #8f1b22; }
+    .registration-intro h1 span { color: #a51e26; }
+    .registration-error-summary { border-color: #df9d99; background: #fff3f1; color: #672229; }
+    .registration-card {
+        border-color: rgba(57,37,35,.14);
+        background: linear-gradient(145deg, rgba(255,255,255,.82), rgba(248,242,237,.8));
+        box-shadow: 0 24px 70px rgba(58,32,28,.13), inset 0 1px rgba(255,255,255,.9);
+    }
+    .registration-brand-copy small { color: #625856; }
+    .registration-steps li { border-color: rgba(57,37,35,.16); color: #655b58; }
+    .registration-steps li span { border-color: rgba(57,37,35,.24); color: #625856; }
+    .registration-steps li.is-current { border-color: #b71c1c; color: #5a0a12; }
+    .registration-steps li.is-complete { border-color: rgba(183,28,28,.55); color: #68151b; }
+    .progress-heading { color: #615654; }
+    .progress-heading span:first-child { color: #211b1a; }
+    .progress-track { background: rgba(57,37,35,.12); }
+    .field > label, .channel-fieldset > legend { color: #322a28; }
+    .field > label span { color: #6d6260; }
+    .field input:not([type=radio]):not([type=checkbox]), .field select, .phone-input {
+        border-color: rgba(57,37,35,.2); background: #fff; color: #211b1a;
+    }
+    .field input::placeholder { color: #817572; }
+    .field option { background: #fff; color: #211b1a; }
+    .phone-input > span { color: #721820; }
+    .field-help, .medical-disclaimer, .privacy-note { color: #655b58; }
+    .field-error { color: #9c2026; }
+    .yes-no-question > legend { color: #403735; }
+    .radio-options span, .channel-options span {
+        border-color: rgba(57,37,35,.2); background: #fff; color: #514745;
+    }
+    .radio-options input:checked + span, .channel-options input:checked + span {
+        border-color: #b71c1c; background: #f7e4e1; color: #68151b;
+    }
+    .eligibility-result { border-color: rgba(183,28,28,.2); border-left-color: #b71c1c; background: rgba(183,28,28,.06); }
+    .eligibility-result p { color: #5d514f; }
+    .eligibility-result[data-state=eligible] { border-left-color: #24744f; }
+    .eligibility-result[data-state=review], .eligibility-result[data-state=deferred] { border-color: rgba(156,101,29,.32); border-left-color: #9c651d; background: rgba(219,169,88,.12); }
+    .eligibility-result[data-state=not-eligible] { border-left-color: #b71c1c; }
+    .button-progress { border-color: #a51e26; background: transparent; color: #211b1a; }
+    .button-progress[data-progressing=true] { background: linear-gradient(90deg, #b71c1c var(--completion), #5a0a12 var(--completion)); color: #fff; }
+    .button-progress:not(:disabled) { border-color: #b71c1c; background: #b71c1c; color: #fff; }
+    .button-secondary { border-color: rgba(57,37,35,.25); color: #453b39; }
+    .button-secondary:hover { border-color: rgba(57,37,35,.48); background: rgba(57,37,35,.05); }
+    .consent-block { border-color: var(--line); background: rgba(57,37,35,.025); }
+    .consent-label { color: #37302e; }
+    .registration-footnote { color: #625856; }
+    .ambulance-stage { background: radial-gradient(ellipse at 50% 100%, rgba(120,21,33,.12), transparent 68%); }
+    .skip-animation { border-color: rgba(57,37,35,.25); color: #211b1a; background: rgba(255,255,255,.94); }
+    .skip-animation:hover { background: #f4e3df; }
+    .confirmation-message { color: #8f1b22; }
 }

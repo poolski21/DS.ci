@@ -10,11 +10,44 @@
         const progress = app.querySelector('[data-progress]');
         const progressFill = app.querySelector('[data-progress-fill]');
         const progressLabel = app.querySelector('[data-progress-label]');
+        const stepIndicators = [...app.querySelectorAll('[data-step-indicator]')];
         const serverErrors = document.querySelector('.registration-error-summary');
         const pregnancyQuestion = form.querySelector('[data-pregnancy-question]');
         const sexField = form.elements.namedItem('sex');
         const emailField = form.elements.namedItem('email');
         const channelFields = [...form.querySelectorAll('[name="preferred_channel"]')];
+        const lastDonationDateField = form.elements.namedItem('last_donation_date');
+        const birthDateField = form.elements.namedItem('birth_date');
+
+        const controlIsValid = (control) => {
+            if (control.required && ['text', 'tel'].includes(control.type) && !control.value.trim()) {
+                return false;
+            }
+            return control.checkValidity();
+        };
+
+        const updateCompletion = (step) => {
+            const section = steps.find((item) => Number(item.dataset.step) === step);
+            const button = form.querySelector(`[data-step-button="${step}"]`);
+            const fields = [...section.querySelectorAll('[data-completion-field]')];
+            const groups = [...section.querySelectorAll('[data-completion-group]')]
+                .filter((group) => !group.hidden && [...group.querySelectorAll('input[type="radio"]')].some((input) => !input.disabled));
+            const emailIsRequired = step === 2 && channelFields.some((input) => input.checked && input.value === 'email');
+            emailField.required = emailIsRequired;
+
+            const completedFields = fields.filter(controlIsValid).length;
+            const completedGroups = groups.filter((group) => [...group.querySelectorAll('input[type="radio"]')].some((input) => input.checked)).length;
+            const completedEmail = emailIsRequired && controlIsValid(emailField) ? 1 : 0;
+            const total = fields.length + groups.length + Number(emailIsRequired);
+            const percentage = total ? Math.round((completedFields + completedGroups + completedEmail) / total * 100) : 0;
+
+            button.style.setProperty('--completion', `${percentage}%`);
+            button.disabled = percentage !== 100;
+            button.dataset.complete = String(percentage === 100);
+            button.dataset.progressing = String(percentage > 0 && percentage < 100);
+            button.setAttribute('aria-label', `${button.dataset.progressLabel} — ${percentage} % complété`);
+            button.querySelector('[data-completion-value]').textContent = `${percentage} %`;
+        };
 
         const showStep = (step, persist = true) => {
             const activeStep = Math.max(1, Math.min(2, step));
@@ -23,9 +56,20 @@
                 section.hidden = !isActive;
                 section.setAttribute('aria-hidden', String(!isActive));
             });
-            progressLabel.textContent = `Étape ${activeStep} sur 3`;
             progress.setAttribute('aria-valuenow', String(activeStep));
             progressFill.style.width = `${(activeStep / 3) * 100}%`;
+            stepIndicators.forEach((indicator) => {
+                const indicatorStep = Number(indicator.dataset.stepIndicator);
+                indicator.classList.toggle('is-current', indicatorStep === activeStep);
+                indicator.classList.toggle('is-complete', indicatorStep < activeStep);
+                if (indicatorStep === activeStep) {
+                    indicator.setAttribute('aria-current', 'step');
+                } else {
+                    indicator.removeAttribute('aria-current');
+                }
+            });
+            progressLabel.textContent = `Étape ${activeStep} sur 3`;
+            updateCompletion(activeStep);
             if (persist) {
                 window.sessionStorage.setItem(stepStorageKey, String(activeStep));
             }
@@ -47,12 +91,40 @@
 
         const validationMessage = (control) => {
             if (control.validity.valueMissing) {
+                const requiredMessages = {
+                    first_name: 'Saisissez votre prénom.',
+                    last_name: 'Saisissez votre nom.',
+                    phone: 'Saisissez votre numéro de téléphone.',
+                    location: 'Indiquez votre lieu de résidence.',
+                    email: 'L’e-mail est nécessaire si vous choisissez ce canal de notification.',
+                };
+                if (requiredMessages[control.name]) return requiredMessages[control.name];
                 return control.type === 'checkbox'
                     ? 'Votre accord est nécessaire pour continuer.'
                     : 'Ce champ est obligatoire.';
             }
+            if (control.required && ['text', 'tel'].includes(control.type) && !control.value.trim()) {
+                return {
+                    first_name: 'Saisissez votre prénom.',
+                    last_name: 'Saisissez votre nom.',
+                    phone: 'Saisissez votre numéro de téléphone.',
+                    location: 'Indiquez votre lieu de résidence.',
+                }[control.name] || 'Ce champ est obligatoire.';
+            }
             if (control.validity.typeMismatch) {
                 return 'Saisissez une adresse e-mail valide.';
+            }
+            if (control.name === 'birth_date' && (control.validity.rangeUnderflow || control.validity.rangeOverflow)) {
+                return 'La date de naissance doit être dans le passé.';
+            }
+            if (control.name === 'weight_kg' && (control.validity.rangeUnderflow || control.validity.rangeOverflow || control.validity.stepMismatch)) {
+                return 'Saisissez un poids valide.';
+            }
+            if (control.name === 'last_donation_date' && control.validity.rangeUnderflow) {
+                return 'La date ne peut pas être antérieure à votre date de naissance.';
+            }
+            if (control.name === 'last_donation_date' && control.validity.rangeOverflow) {
+                return 'Cette date ne peut pas être dans le futur.';
             }
             if (control.validity.patternMismatch || control.validity.tooShort) {
                 return 'Saisissez les 10 chiffres du numéro, sans indicatif.';
@@ -90,7 +162,7 @@
                     return;
                 }
 
-                if (!control.checkValidity()) {
+                if (!controlIsValid(control)) {
                     valid = false;
                     firstInvalid ||= control;
                     control.setAttribute('aria-invalid', 'true');
@@ -135,37 +207,69 @@
             const result = app.querySelector('[data-eligibility-result]');
             const title = result.querySelector('[data-eligibility-title]');
             const message = result.querySelector('[data-eligibility-message]');
-            const birthDate = dateFromInput(form.elements.namedItem('birth_date').value);
+            const icon = result.querySelector('[data-eligibility-icon]');
+            const birthDate = dateFromInput(birthDateField.value);
             const weight = Number(form.elements.namedItem('weight_kg').value);
-            if (!birthDate || !weight) return;
+            const showResult = (state, titleText, messageText) => {
+                result.dataset.state = state;
+                icon.textContent = {
+                    eligible: '✓',
+                    review: '⚠',
+                    deferred: '⚠',
+                    'not-eligible': '✕',
+                }[state];
+                title.textContent = titleText;
+                message.textContent = messageText;
+            };
+            const doctorDisclaimer = 'La décision finale revient toujours au médecin lors de la collecte.';
+
+            if (!birthDate || !Number.isFinite(weight) || weight <= 0) {
+                showResult('review', 'Votre pré-contrôle apparaîtra ici.', doctorDisclaimer);
+                return;
+            }
 
             const today = new Date();
             const age = calculateAge(birthDate, today);
             const minimumAge = Number(app.dataset.minimumAge);
             const maximumAge = Number(app.dataset.maximumAge);
             const minimumWeight = Number(app.dataset.minimumWeight);
-            const positiveAnswers = ['recent_fever_or_infection', 'chronic_condition', 'current_treatment', 'recent_surgery_or_transfusion', 'pregnancy_or_breastfeeding']
-                .some((name) => {
-                    const input = form.querySelector(`[name="${name}"][value="1"]`);
-                    return input && input.checked && !input.disabled;
-                });
+            const answerNames = [
+                'recent_fever_or_infection',
+                'chronic_condition',
+                'current_treatment',
+                'recent_surgery_or_transfusion',
+            ];
+            if (sexField.value === 'female') answerNames.push('pregnancy_or_breastfeeding');
+            const answersComplete = answerNames.every((name) => form.querySelector(`[name="${name}"]:checked`));
+            const positiveAnswers = answerNames.some((name) => {
+                const input = form.querySelector(`[name="${name}"][value="1"]`);
+                return input && input.checked && !input.disabled;
+            });
 
-            result.dataset.state = 'review';
             if (age < minimumAge) {
                 const earliestDate = new Date(birthDate);
                 earliestDate.setFullYear(earliestDate.getFullYear() + minimumAge);
-                title.textContent = `Vous pourrez envisager un don à partir du ${formatDate(earliestDate)}.`;
-                message.textContent = 'Cette date est indicative et reste soumise à l’avis du médecin lors de la collecte.';
+                showResult('deferred', `Vous pourrez envisager un don à partir du ${formatDate(earliestDate)}.`, doctorDisclaimer);
                 return;
             }
             if (age > maximumAge || weight < minimumWeight) {
-                title.textContent = 'Un échange avec l’équipe médicale sera nécessaire.';
-                message.textContent = 'Les critères affichés sont indicatifs. Le médecin pourra étudier votre situation.';
+                showResult(
+                    'not-eligible',
+                    'Selon ces repères indicatifs, vous ne semblez pas éligible aujourd’hui.',
+                    `Un médecin pourra confirmer votre situation. ${doctorDisclaimer}`,
+                );
+                return;
+            }
+            if (!answersComplete) {
+                showResult('review', 'Répondez aux questions pour voir votre pré-contrôle.', doctorDisclaimer);
                 return;
             }
             if (positiveAnswers) {
-                title.textContent = 'L’équipe médicale pourra vous conseiller.';
-                message.textContent = 'Merci pour votre transparence. Le médecin évaluera votre situation avec vous.';
+                showResult(
+                    'review',
+                    'Un don pourra être envisagé après avis de l’équipe médicale.',
+                    `Merci pour votre transparence. Le médecin évaluera votre situation avec vous. ${doctorDisclaimer}`,
+                );
                 return;
             }
 
@@ -175,15 +279,12 @@
                 eligibleDate.setDate(eligibleDate.getDate() + Number(app.dataset.intervalDays));
                 const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
                 if (eligibleDate > todayStart) {
-                    title.textContent = `Vous pourrez envisager un nouveau don à partir du ${formatDate(eligibleDate)}.`;
-                    message.textContent = 'Le médecin confirmera toujours votre aptitude lors de la collecte.';
+                    showResult('deferred', `Vous pourrez envisager un nouveau don à partir du ${formatDate(eligibleDate)}.`, doctorDisclaimer);
                     return;
                 }
             }
 
-            result.dataset.state = 'eligible';
-            title.textContent = 'Vous semblez éligible.';
-            message.textContent = 'La décision finale revient toujours au médecin lors de la collecte.';
+            showResult('eligible', 'Vous semblez éligible.', doctorDisclaimer);
         };
 
         form.querySelectorAll('[data-next]').forEach((button) => {
@@ -209,15 +310,23 @@
         });
         form.addEventListener('input', (event) => {
             clearFieldError(event.target.name);
+            if (event.target === birthDateField) {
+                lastDonationDateField.min = birthDateField.value;
+            }
             updateEligibility();
+            updateCompletion(Number(event.target.closest('[data-step]').dataset.step));
         });
         form.addEventListener('change', (event) => {
             clearFieldError(event.target.name);
             if (event.target === sexField) updatePregnancyQuestion();
+            if (event.target === birthDateField) {
+                lastDonationDateField.min = birthDateField.value;
+            }
             if (event.target.name === 'preferred_channel') {
                 emailField.required = event.target.value === 'email';
             }
             updateEligibility();
+            updateCompletion(Number(event.target.closest('[data-step]').dataset.step));
         });
 
         const serverStep = Number(app.dataset.initialStep) || 1;
@@ -227,6 +336,7 @@
                 .forEach((input) => input.setAttribute('aria-invalid', 'true'));
         });
         showStep(serverErrors && !serverErrors.hidden ? serverStep : savedStep, false);
+        lastDonationDateField.min = birthDateField.value;
         updatePregnancyQuestion();
         emailField.required = channelFields.some((input) => input.checked && input.value === 'email');
         if (confirmation) window.sessionStorage.removeItem(stepStorageKey);
@@ -237,60 +347,34 @@
     const registrationCard = document.getElementById('registration-card');
     const skipButton = document.querySelector('[data-skip-animation]');
 
-    if (scene && ambulance && registrationCard && !reducedMotion && window.gsap) {
+    const hasServerErrors = document.querySelector('.registration-error-summary:not([hidden])');
+
+    if (scene && ambulance && registrationCard && skipButton && !reducedMotion && !hasServerErrors) {
         scene.hidden = false;
         skipButton.hidden = false;
-        const rearDoor = scene.querySelector('[data-rear-door]');
-        const mobile = window.matchMedia('(max-width: 600px)').matches;
-        const entryDuration = mobile ? .65 : .95;
-        const doorDuration = mobile ? .18 : .28;
-        const cardDuration = mobile ? .5 : .62;
-        const exitDuration = mobile ? .58 : .82;
-        const fadeDuration = mobile ? .2 : .28;
-        let timeline;
+        scene.classList.add('is-animating');
+        app.classList.add('is-animating');
+        registrationCard.inert = true;
         let finished = false;
 
         const finishAnimation = () => {
             if (finished) return;
             finished = true;
-            timeline?.kill();
-            registrationCard.style.visibility = 'visible';
-            registrationCard.style.opacity = '1';
-            registrationCard.style.transform = 'none';
+            app.classList.remove('is-animating');
+            registrationCard.inert = false;
+            scene.classList.remove('is-animating');
             scene.hidden = true;
             skipButton.hidden = true;
+            if (document.activeElement === skipButton) {
+                app.querySelector('.form-step:not([hidden]) h2').focus({ preventScroll: true });
+            }
         };
 
-        gsap.set(registrationCard, { autoAlpha: 0, scaleX: .08, x: -30, transformOrigin: 'left center' });
-        gsap.set(ambulance, { x: '-120vw', y: '-50%' });
-        timeline = gsap.timeline({ onComplete: finishAnimation });
-        timeline
-            .to(ambulance, { x: '-8vw', duration: entryDuration, ease: 'power2.out' })
-            .to(ambulance, { x: '0vw', duration: mobile ? .14 : .2, ease: 'power1.out' })
-            .to(rearDoor, { rotationY: -62, transformOrigin: 'left center', duration: doorDuration, ease: 'power2.out' }, mobile ? '+=.03' : '+=.08')
-            .to(registrationCard, { autoAlpha: 1, scaleX: 1, x: 0, duration: cardDuration, ease: 'back.out(1.3)' }, mobile ? '+=.04' : '+=.06')
-            .to(ambulance, { x: '120vw', duration: exitDuration, ease: 'power2.in' }, mobile ? '+=.12' : '+=.28')
-            .to(scene, { autoAlpha: 0, duration: fadeDuration, ease: 'power1.out' });
-
+        window.setTimeout(finishAnimation, 9000);
         skipButton.addEventListener('click', finishAnimation);
     } else if (scene) {
         scene.hidden = true;
-        if (registrationCard) registrationCard.style.visibility = 'visible';
     }
 
-    if (confirmation) {
-        window.sessionStorage.removeItem(stepStorageKey);
-        const fill = confirmation.querySelector('[data-heart-fill]');
-        const drop = confirmation.querySelector('[data-heart-drop]');
-        if (fill && drop && !reducedMotion && window.gsap) {
-            gsap.set(drop, { y: -8, scale: .86, transformOrigin: 'center center' });
-            gsap.timeline({ repeat: -1, repeatDelay: .7 })
-                .to(drop, { y: 58, duration: .8, ease: 'power2.in' })
-                .to(drop, { autoAlpha: 0, duration: .12 }, '-=.12')
-                .to(fill, { attr: { y: 62, height: 84 }, duration: .9, ease: 'power1.out' }, '-=.24')
-                .to(confirmation.querySelector('svg'), { scale: 1.035, duration: .25, yoyo: true, repeat: 1 }, '-=.2')
-                .set(fill, { attr: { y: 146, height: 0 } })
-                .set(drop, { y: -8, autoAlpha: 1 });
-        }
-    }
+    if (confirmation) window.sessionStorage.removeItem(stepStorageKey);
 })();

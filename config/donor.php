@@ -3,7 +3,7 @@
 return [
     'eligibility' => [
         'minimum_age' => 18,
-        'maximum_age' => 65,
+        'maximum_age' => 60,
         'minimum_weight_kg' => 50,
         'donation_interval_days' => 90,
     ],
